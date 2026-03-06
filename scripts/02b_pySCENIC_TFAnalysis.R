@@ -13,9 +13,7 @@
 # Cluster annotations, differential TF activity, and Jun regulon
 # visualizations are included.
 #
-# Author: Karth Kodali
-# Gallitano Lab - University of Arizona
-# Date: 2025
+# Author: Karthikeya Kodali
 
 library(Seurat)
 library(SeuratExtend)
