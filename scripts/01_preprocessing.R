@@ -2,7 +2,11 @@
 # 
 # Purpose: Convert processed Seurat object to loom format for pySCENIC
 # Input: Seurat object (seu) - provided by Gallitano lab
-# Output: .loom file for use in 01_pySCENIC.ipynb
+# Output: .loom file for use in 02_pySCENIC.ipynb
+#         "output/NS_only.rds"
+#         "output/SD_only.rds"
+#         .loom file of only SD cells for use in 02_pySCENIC.ipynb
+#         .loom file of only NS cells for use in 02_pySCENIC.ipynb
 # Note: Raw data preprocessing (QC, normalization) was performed 
 # upstream by the Gallitano lab prior to this analysis
 #
@@ -13,7 +17,7 @@ library(SeuratExtend)
 library(reticulate)
 
 # Load seurat object
-seu <- readRDS("data/seurat_object.rds")
+data <- readRDS("data/seurat_object.rds")
 
 #replace with cell types as needed
 new.cluster.ids <- c(
@@ -34,16 +38,43 @@ new.cluster.ids <- c(
 #setting labels of seurat object
 data <- RenameIdents(data, new.cluster.ids)
 data$celltype <- Idents(data)
-data$celltype_short <- celltype_short[as.character(data$celltype)]
 data$condition_label <- ifelse(data$condition == "WT_SD", "Sleep Deprived", "Control")
 data$celltype_condition <- paste(data$celltype, data$condition, sep = "_")
 
+#Split conditions into separate Seurat objects
+NS <- subset(data, data@meta.data$condition == "WT_SD_Ctrl")
+SD <- subset(data, data@meta.data$condition != "WT_SD_Ctrl")
+
+#sanity check
+isTrue(length(colnames(NS)) + length(colnames(SD)) == length(colnames(data)))
+
 # Convert to loom format for pySCENIC input
 Seu2Loom(
-  seu,
+  data,
   filename = "data/scenic_input.loom",
   add.normdata = FALSE,
   add.metadata = TRUE,
   layers = NULL,
   overwrite = FALSE
 )
+
+Seu2Loom(
+  SD,
+  filename = "data/SD_scenic_input.loom",
+  add.normdata = FALSE,
+  add.metadata = TRUE,
+  layers = NULL,
+  overwrite = FALSE
+)
+
+Seu2Loom(
+  NS,
+  filename = "data/NS_scenic_input.loom",
+  add.normdata = FALSE,
+  add.metadata = TRUE,
+  layers = NULL,
+  overwrite = FALSE
+)
+
+SaveSeuratRds(SD, "output/SD_only.rds")
+SaveSeuratRds(NS, "output/NS_only.rds")

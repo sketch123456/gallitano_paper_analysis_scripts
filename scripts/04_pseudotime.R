@@ -18,7 +18,6 @@
 
 library(Seurat)
 library(SeuratExtend)
-library(slingshot)
 library(SingleCellExperiment)
 library(ggplot2)
 library(dplyr)
