@@ -7,12 +7,16 @@
 #          figures/gene_trends_palantir.pdf
 #          figures/pseudotime_density_slingshot.pdf
 #          figures/gene_trends_slingshot.pdf
+#          figures/ms_umap_celltype.pdf
+#          figures/ms_umap_palantir.pdf
+#          figures/ms_umap_slingshot.pdf
+#          figures/ms_umap_combined.pdf
 #          output/odc_lineage.rds
 #
-#Performs Pseudotime trajectory analysis using both Palantir and Slingshot
-#on the initial full Seurat object. Results showed that OPC-ODC was the 
-#only biologically meaningful trajectory, which was then further analyzed
-#for effects of SD on progression and on gene expression over pseudotime.
+# Performs Pseudotime trajectory analysis using both Palantir and Slingshot
+# on the initial full Seurat object. Results showed that OPC-ODC was the
+# only biologically meaningful trajectory, which was then further analyzed
+# for effects of SD on progression and on gene expression over pseudotime.
 #
 # Author: Karthikeya Kodali
 
@@ -145,23 +149,6 @@ dev.off()
 
 odc_meta <- odc_lineage@meta.data %>% filter(!is.na(Pseudotime))
 
-p_density_palantir <- ggplot(
-  odc_meta, aes(x = Pseudotime, fill = condition, color = condition)
-) +
-  geom_density(alpha = 0.4) +
-  scale_fill_manual(values  = c("WT_SD" = "firebrick", "WT_SD_Ctrl" = "steelblue")) +
-  scale_color_manual(values = c("WT_SD" = "firebrick", "WT_SD_Ctrl" = "steelblue")) +
-  theme_bw() +
-  labs(
-    title = "OPC-Oligodendrocyte Pseudotime: SD vs Control (Palantir)",
-    x     = "Pseudotime",
-    y     = "Density"
-  )
-
-pdf("figures/pseudotime_density_palantir.pdf", width = 8, height = 5)
-print(p_density_palantir)
-dev.off()
-
 # Wilcoxon test: SD vs Ctrl pseudotime distribution
 wilcox_palantir <- wilcox.test(
   odc_lineage$Pseudotime[odc_lineage$condition == "WT_SD"],
@@ -171,6 +158,49 @@ print(wilcox_palantir)
 # Result: p = 9.448e-09
 # SD cells enriched at early pseudotime (OPC state)
 # Control cells enriched at late pseudotime (mature ODC state)
+
+p_density_palantir <- ggplot(
+  odc_meta, aes(x = Pseudotime, fill = condition, color = condition)
+) +
+  geom_density(alpha = 0.4) +
+  scale_fill_manual(
+    values = c("WT_SD" = "firebrick", "WT_SD_Ctrl" = "steelblue"),
+    labels = c("WT_SD" = "Sleep Deprived", "WT_SD_Ctrl" = "Control"),
+    name   = "Condition"
+  ) +
+  scale_color_manual(
+    values = c("WT_SD" = "firebrick", "WT_SD_Ctrl" = "steelblue"),
+    labels = c("WT_SD" = "Sleep Deprived", "WT_SD_Ctrl" = "Control"),
+    name   = "Condition"
+  ) +
+  annotate(
+    "text",
+    x     = 1.0,
+    y     = -Inf,
+    vjust = -0.5,
+    hjust = 1,
+    label = "p = 9.45e-09",
+    size  = 5
+  ) +
+  theme_bw() +
+  labs(
+    title = "OPC-Oligodendrocyte Pseudotime: SD vs Control (Palantir)",
+    x     = "Pseudotime",
+    y     = "Density"
+  ) +
+  theme(
+    axis.title       = element_text(size = 18, face = "bold"),
+    axis.text        = element_text(size = 15),
+    legend.title     = element_text(size = 16, face = "bold"),
+    legend.text      = element_text(size = 15),
+    legend.key.size  = unit(1.5, "cm"),
+    plot.title       = element_text(size = 17, face = "bold", hjust = 0.5),
+    panel.grid.minor = element_blank()
+  )
+
+pdf("figures/pseudotime_density_palantir.pdf", width = 12, height = 7)
+print(p_density_palantir)
+dev.off()
 
 # ── 4b. Palantir: Gene trend curves ──────────────────────────────────────────
 
@@ -230,23 +260,7 @@ odc_meta <- odc_lineage@meta.data %>% filter(!is.na(slingPseudotime_1))
 odc_meta$pt_scaled <- (odc_meta$slingPseudotime_1 - min(odc_meta$slingPseudotime_1)) /
   (max(odc_meta$slingPseudotime_1) - min(odc_meta$slingPseudotime_1))
 
-p_density_sling <- ggplot(
-  odc_meta, aes(x = pt_scaled, fill = condition, color = condition)
-) +
-  geom_density(alpha = 0.4) +
-  scale_fill_manual(values  = c("WT_SD" = "firebrick", "WT_SD_Ctrl" = "steelblue")) +
-  scale_color_manual(values = c("WT_SD" = "firebrick", "WT_SD_Ctrl" = "steelblue")) +
-  theme_bw() +
-  labs(
-    title = "Slingshot Pseudotime: SD vs Control",
-    x     = "Pseudotime (scaled 0-1)",
-    y     = "Density"
-  )
-
-pdf("figures/pseudotime_density_slingshot.pdf", width = 8, height = 5)
-print(p_density_sling)
-dev.off()
-
+# Wilcoxon test: SD vs Ctrl pseudotime distribution
 wilcox_sling <- wilcox.test(
   odc_lineage$slingPseudotime_1[odc_lineage$condition == "WT_SD"],
   odc_lineage$slingPseudotime_1[odc_lineage$condition == "WT_SD_Ctrl"]
@@ -254,6 +268,49 @@ wilcox_sling <- wilcox.test(
 print(wilcox_sling)
 # Result: p = 0.0006177
 # Replicates Palantir finding
+
+p_density_sling <- ggplot(
+  odc_meta, aes(x = pt_scaled, fill = condition, color = condition)
+) +
+  geom_density(alpha = 0.4) +
+  scale_fill_manual(
+    values = c("WT_SD" = "firebrick", "WT_SD_Ctrl" = "steelblue"),
+    labels = c("WT_SD" = "Sleep Deprived", "WT_SD_Ctrl" = "Control"),
+    name   = "Condition"
+  ) +
+  scale_color_manual(
+    values = c("WT_SD" = "firebrick", "WT_SD_Ctrl" = "steelblue"),
+    labels = c("WT_SD" = "Sleep Deprived", "WT_SD_Ctrl" = "Control"),
+    name   = "Condition"
+  ) +
+  annotate(
+    "text",
+    x     = 1.0,
+    y     = -Inf,
+    vjust = -0.5,
+    hjust = 1,
+    label = "p = 6.18e-04",
+    size  = 5
+  ) +
+  theme_bw() +
+  labs(
+    title = "OPC-Oligodendrocyte Pseudotime: SD vs Control (Slingshot)",
+    x     = "Pseudotime",
+    y     = "Density"
+  ) +
+  theme(
+    axis.title       = element_text(size = 18, face = "bold"),
+    axis.text        = element_text(size = 15),
+    legend.title     = element_text(size = 16, face = "bold"),
+    legend.text      = element_text(size = 15),
+    legend.key.size  = unit(1.5, "cm"),
+    plot.title       = element_text(size = 17, face = "bold", hjust = 0.5),
+    panel.grid.minor = element_blank()
+  )
+
+pdf("figures/pseudotime_density_slingshot.pdf", width = 12, height = 7)
+print(p_density_sling)
+dev.off()
 
 # ── 5b. Slingshot: Gene trend curves ─────────────────────────────────────────
 
@@ -278,5 +335,116 @@ pdf("figures/gene_trends_slingshot.pdf", width = 10, height = 10)
 print(p_SD_sling / p_Ctrl_sling)
 dev.off()
 
-# Save lineage object for downstream use
+# ── 6. MS UMAP VISUALIZATIONS ────────────────────────────────────────────────
+
+# Cell type plot — legend at bottom to preserve plot area
+p_ms_celltype <- DimPlot(
+  odc_lineage,
+  reduction  = "umap_ms",
+  group.by   = "celltype",
+  label      = FALSE,
+  pt.size    = 1.5,
+  cols       = c(
+    "Oligodendrocyte Progenitor Cells" = "#5B7FA6",
+    "Oligodendrocytes"                 = "#A67C5B"
+  )
+) +
+  labs(
+    title = "OPC-Oligodendrocyte Lineage",
+    x     = "UMAP 1",
+    y     = "UMAP 2"
+  ) +
+  guides(
+    color = guide_legend(
+      override.aes = list(size = 7),
+      title        = "Cell Type"
+    )
+  ) +
+  theme(
+    axis.title         = element_text(size = 22, face = "bold"),
+    axis.text          = element_text(size = 18),
+    legend.title       = element_text(size = 20, face = "bold"),
+    legend.text        = element_text(size = 18),
+    legend.key.size    = unit(1.2, "cm"),
+    legend.margin      = margin(10, 0, 0, 0),
+    legend.box.spacing = unit(0.1, "cm"),
+    legend.position    = "bottom",
+    plot.title         = element_text(size = 22, face = "bold", hjust = 0.5),
+    panel.grid.minor   = element_blank()
+  )
+
+# Palantir pseudotime on ms UMAP
+p_ms_palantir <- FeaturePlot(
+  odc_lineage,
+  features  = "Pseudotime",
+  reduction = "umap_ms",
+  pt.size   = 1.5
+) +
+  scale_color_gradientn(
+    colours = c("#3B1F5E", "#7B2D8B", "#C0487A", "#F0845A", "#FADE7A"),
+    name    = "Pseudotime"
+  ) +
+  labs(
+    title = "Palantir Pseudotime",
+    x     = "UMAP 1",
+    y     = "UMAP 2"
+  ) +
+  theme(
+    axis.title       = element_text(size = 22, face = "bold"),
+    axis.text        = element_text(size = 18),
+    legend.title     = element_text(size = 20, face = "bold"),
+    legend.text      = element_text(size = 16),
+    legend.key.size  = unit(1.2, "cm"),
+    plot.title       = element_text(size = 22, face = "bold", hjust = 0.5),
+    panel.grid.minor = element_blank()
+  )
+
+# Slingshot pseudotime on ms UMAP
+p_ms_slingshot <- FeaturePlot(
+  odc_lineage,
+  features  = "slingPseudotime_1",
+  reduction = "umap_ms",
+  pt.size   = 1.5
+) +
+  scale_color_gradientn(
+    colours = c("#3B1F5E", "#7B2D8B", "#C0487A", "#F0845A", "#FADE7A"),
+    name    = "Pseudotime"
+  ) +
+  labs(
+    title = "Slingshot Pseudotime",
+    x     = "UMAP 1",
+    y     = "UMAP 2"
+  ) +
+  theme(
+    axis.title       = element_text(size = 22, face = "bold"),
+    axis.text        = element_text(size = 18),
+    legend.title     = element_text(size = 20, face = "bold"),
+    legend.text      = element_text(size = 16),
+    legend.key.size  = unit(1.2, "cm"),
+    plot.title       = element_text(size = 22, face = "bold", hjust = 0.5),
+    panel.grid.minor = element_blank()
+  )
+
+# Save individually
+pdf("figures/ms_umap_celltype.pdf", width = 10, height = 10)
+print(p_ms_celltype)
+dev.off()
+
+pdf("figures/ms_umap_palantir.pdf", width = 10, height = 8)
+print(p_ms_palantir)
+dev.off()
+
+pdf("figures/ms_umap_slingshot.pdf", width = 10, height = 8)
+print(p_ms_slingshot)
+dev.off()
+
+# Combined panel
+p_combined <- p_ms_celltype | p_ms_palantir | p_ms_slingshot
+
+pdf("figures/ms_umap_combined.pdf", width = 30, height = 10)
+print(p_combined)
+dev.off()
+
+# ── 7. SAVE LINEAGE OBJECT ───────────────────────────────────────────────────
+
 SaveSeuratRds(odc_lineage, "output/odc_lineage.rds")
